@@ -1,0 +1,13 @@
+# .gitignore 파일 내용
+
+# 가상 환경 폴더
+.venv/
+
+# Python 캐시 폴더
+__pycache__/
+
+# 모든 로그 파일
+*.log
+
+# SQLite 데이터베이스 파일
+db.sqlite3
