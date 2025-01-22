@@ -6,7 +6,7 @@ authors = [
     {name = "bluebamus",email = "bluebamus@naver.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 dependencies = [
     "django (>=5.1.5,<6.0.0)",
     "selenium (>=4.28.0,<5.0.0)",
