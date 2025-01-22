@@ -26,9 +26,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = secrets.token_urlsafe(32)  # 32바이트 길이의 랜덤 문자열 생성
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False  # 프로덕션 환경에서는 DEBUG를 False로 설정
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['bluebamus.pythonanywhere.com','127.0.0.1',]  # 도메인 주소 추가
 
 
 # Application definition
@@ -124,6 +124,8 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # 정적 파일 수집 위치
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
@@ -136,6 +138,6 @@ SESSION_COOKIE_AGE = 1209600
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
-# 미디어 파일 설정
+# 미디어 파일 설정 제거
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
