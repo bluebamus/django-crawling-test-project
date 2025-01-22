@@ -16,7 +16,8 @@ import secrets
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+LOGGING_DIR = Path(__file__).resolve().parent.parent / 'logs'
+LOGGING_DIR.mkdir(exist_ok=True)  # 로그 디렉토리 생성
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -26,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = secrets.token_urlsafe(32)  # 32바이트 길이의 랜덤 문자열 생성
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False  # 프로덕션 환경에서는 DEBUG를 False로 설정
+DEBUG = True  # 프로덕션 환경에서는 DEBUG를 False로 설정
 
 ALLOWED_HOSTS = ['bluebamus.pythonanywhere.com','127.0.0.1',]  # 도메인 주소 추가
 
@@ -141,3 +142,42 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 # 미디어 파일 설정 제거
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOGGING_DIR, 'django_debug.log'),
+            'formatter': 'verbose',
+        },
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        '': {  # 루트 로거
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+} 

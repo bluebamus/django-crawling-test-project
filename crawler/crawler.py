@@ -12,6 +12,8 @@ from selenium.common.exceptions import StaleElementReferenceException
 from selenium.webdriver.chrome.service import Service 
 from webdriver_manager.chrome import ChromeDriverManager
 import requests
+from requests.exceptions import Timeout, ProxyError, ConnectionError, HTTPError, RequestException
+
 
 # 로깅 설정
 logging.basicConfig(
@@ -30,16 +32,24 @@ class BannerCrawler:
     def __init__(self):
         # HTTP 프록시 서버 리스트
         self.proxy_list = [
-            {'ip': '121.161.79.38', 'port': '3128', 'type': 'http'},
+            {'ip': '211.225.214.241', 'port': '80', 'type': 'http'},
+            {'ip': '211.202.167.56', 'port': '80', 'type': 'http'},
+            {'ip': '211.34.105.33', 'port': '80', 'type': 'http'},
+            {'ip': '154.90.63.164', 'port': '3128', 'type': 'http'},
+            {'ip': '193.123.252.70', 'port': '35973', 'type': 'socks5'},
+            {'ip': '45.64.173.109', 'port': '80', 'type': 'http'},
         ]
         self.ua = UserAgent()
         
-    def get_random_proxy(self):
+    def get_proxy(self, current_proxy):
         """
-        HTTP 프록시 중 하나를 랜덤하게 선택하여 반환합니다.
-        :return: 선택된 프록시 정보 (딕셔너리)
+        현재 프록시를 기준으로 다음 프록시 정보를 반환합니다.
+        :param current_proxy: 현재 프록시 정보 (딕셔너리)
+        :return: 다음 프록시 정보 (딕셔너리)
         """
-        return random.choice(self.proxy_list)
+        current_index = self.proxy_list.index(current_proxy)  # 현재 프록시의 인덱스 찾기
+        next_index = (current_index + 1) % len(self.proxy_list)  # 다음 인덱스 계산 (순환)
+        return self.proxy_list[next_index]  # 다음 프록시 반환
 
     def get_user_agent(self, index=None):
         """
@@ -92,21 +102,25 @@ class BannerCrawler:
             proxy_addr = f"{proxy_info['ip']}:{proxy_info['port']}"
             logging.info(f"Setting up HTTP proxy: {proxy_addr}")
             options.add_argument(f'--proxy-server={proxy_addr}')
-        
-        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),
-            options=options
-        )
+   
+        # Chrome 드라이버 설정
+        service = Service(ChromeDriverManager().install())
+        service.log_path = 'chromedriver.log'  # 로그 파일 경로
+        service.log_level = 'DEBUG'  # 로그 레벨 설정
+
+        driver = webdriver.Chrome(service=service, options=options)
         
         # 자동화 감지 방지 스크립트
         driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
         
         # DNS Leak Test 페이지로 이동
-        driver.get("https://dnsleaktest.com/")  # DNS Leak Test 페이지 요청
-        logging.info("Accessing DNS Leak Test page.")  # 페이지 접근 로그
+        driver.set_page_load_timeout(10)
+        # driver.get("https://dnsleaktest.com/")  # DNS Leak Test 페이지 요청
+        # logging.info("Accessing DNS Leak Test page.")  # 페이지 접근 로그
 
-        # "Standard test" 버튼이 로드될 때까지 대기
-        wait = WebDriverWait(driver, 20)  # 최대 20초 대기
-        wait.until(EC.presence_of_element_located((By.XPATH, "//input[@type='submit' and @class='standard' and @name='type' and @value='Standard test']")))  # 특정 요소가 로드될 때까지 대기
+        # # "Standard test" 버튼이 로드될 때까지 대기
+        # wait = WebDriverWait(driver, 10)  # 최대 20초 대기
+        # wait.until(EC.presence_of_element_located((By.XPATH, "//input[@type='submit' and @class='standard' and @name='type' and @value='Standard test']")))  # 특정 요소가 로드될 때까지 대기
         
         return driver  # 설정된 드라이버 반환
         
@@ -118,67 +132,74 @@ class BannerCrawler:
         
         :param url: 크롤링할 URL
         """
-        driver = None  # 드라이버 변수를 초기화
-        try:
-            proxy_info = self.get_random_proxy()
-            logging.info(f"Selected proxy: {proxy_info}")
-            
-            driver = self.setup_driver(proxy_info)
-            
-            # 페이지 로드 시간 랜덤화
-            load_wait = random.uniform(3, 7)
-            time.sleep(load_wait)
-            
-            # 목표 URL 접속
-            driver.get(url)
-            logging.info(f"Accessing URL: {url} with proxy: {proxy_info}")
-            
-            # 자바스크립트 로드 완료 대기
-            wait = form_element = WebDriverWait(driver, 10)
-            WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
-            
-            # 이미지 요소들이 로드될 때까지 대기
-            images = wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, "img-fluid")))
-            
-            # 발견된 모든 이미지 로깅
-            for idx, img in enumerate(images):
-                src = img.get_attribute('src')
-                logging.info(f"Found image {idx + 1}: {src}")
-            
-            view_wait = random.uniform(1, 3)
-            time.sleep(view_wait)
-            
-            # 랜덤 이미지 선택 및 클릭
-            while True:
+        current_index = 0  # 현재 프록시 인덱스 초기화
+        total_proxies = len(self.proxy_list)  # 총 프록시 수
+
+        while True:  # 무한 루프를 통해 프록시를 순환
+            proxy_info = self.get_proxy(self.proxy_list[current_index])  # 현재 프록시 가져오기
+            proxy_url = f"{proxy_info['type']}://{proxy_info['ip']}:{proxy_info['port']}"
+            proxies = {
+                'http': proxy_url,
+                'https': proxy_url
+            }
+
+            try:
+                
                 try:
-                    random_image = random.choice(images)  # 요소를 다시 검색
-                    driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", random_image)
-                    time.sleep(random.uniform(0.5, 1.5))
-                    random_image.click()
-                    logging.info(f"Clicked image: {random_image.get_attribute('src')}")
-                    break  # 클릭 성공 시 루프 종료
-                except StaleElementReferenceException:
-                    # 요소가 더 이상 유효하지 않으면 다시 검색
-                    logging.warning("Stale element reference, re-fetching images.")
-                    images = wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, "img-fluid")))
-            
-            time.sleep(1)
-            
-        except Exception as e:
-            logging.error(f"Error occurred: {str(e)}")
-        
-        finally:
-            if driver is not None:  # driver가 None이 아닐 때만 quit 호출
-                driver.quit()
-    
-    
-    # 여러 번 실행하기 위한 루프 (주석 처리됨)
-    """
-    for i in range(10):  # 10회 반복
-        crawler.visit_and_click(base_url)
-        # 요청 간격 랜덤화
-        time.sleep(random.uniform(5, 15))
-    """
+                    response = requests.get('http://api.ipify.org', proxies=proxies, timeout=5)
+                    response.raise_for_status()  # HTTP 에러 상태 코드가 있으면 예외 발생
+                except (Timeout, ProxyError, ConnectionError, HTTPError) as e:
+                    logging.error(f"❌ Proxy failed: {proxy_url} | Error: {e}")
+                    current_index += 1
+                    continue
+                except RequestException as e:
+                    logging.info(f"An error occurred: {e}")
+                    current_index += 1
+                    continue
+                    
+                logging.info(f"Using proxy: {proxy_url}")
+                
+                # Selenium 드라이버 설정
+                driver = self.setup_driver(proxy_info)
+                driver.get(url)  # 주어진 URL로 이동
+
+                # 페이지 로드 완료 대기
+                wait = WebDriverWait(driver, 10)
+                wait.until(lambda d: d.execute_script('return document.readyState') == 'complete')
+
+                # 이미지 요소들이 로드될 때까지 대기
+                images = wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, "img-fluid")))
+
+                # 발견된 모든 이미지 로깅
+                for idx, img in enumerate(images):
+                    src = img.get_attribute('src')
+                    logging.info(f"Found image {idx + 1}: {src}")
+
+                # 랜덤 이미지 선택 및 클릭
+                random_image = random.choice(images)
+                driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", random_image)
+                time.sleep(random.uniform(0.5, 1.5))
+                random_image.click()
+                logging.info(f"Clicked image: {random_image.get_attribute('src')}")
+
+                driver.quit()  # 작업 완료 후 드라이버 종료
+                
+                 # 다음 프록시로 인덱스 증가
+                current_index += 1
+
+                # 다음 프록시가 있는지 확인
+                if current_index >= total_proxies:
+                    logging.error("All proxies have been tested and failed.")
+                    print("All proxies have been tested and failed.")
+                    break  # 모든 프록시를 테스트한 경우 루프 종료
+                else:
+                    continue  # 다음 프록시로 계속 진행
+
+
+            except requests.RequestException as e:
+                logging.error(f"❌ Proxy failed: {proxy_url} | Error: {e}")
+                print(f"❌ Proxy failed: {proxy_url} | Error: {e}")
+
 
 def main():
     """
@@ -186,7 +207,8 @@ def main():
     BannerCrawler 인스턴스를 생성하고, 지정된 URL에 대해 크롤링을 수행합니다.
     """
     crawler = BannerCrawler()
-    base_url = "http://localhost:8000"
+    base_url = "https://bluebamus.pythonanywhere.com/"
+    # base_url = "http://127.0.0.1:8000"
     crawler.visit_and_click(base_url)
 
 if __name__ == "__main__":

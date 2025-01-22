@@ -234,6 +234,21 @@ files = [
 ]
 
 [[package]]
+name = "chromedriver-autoinstaller"
+version = "0.6.4"
+description = "Automatically install chromedriver that supports the currently installed version of chrome."
+optional = false
+python-versions = ">=3.6"
+groups = ["main"]
+files = [
+    {file = "chromedriver-autoinstaller-0.6.4.tar.gz", hash = "sha256:1b4df04b87e6107c730085b98e5fd541db3d1777c32b8bd08e2ca4b1244050af"},
+    {file = "chromedriver_autoinstaller-0.6.4-py3-none-any.whl", hash = "sha256:b12ed187ca9fac4d744deb588d221222ed50836384607e5303e6eab98bb9dc64"},
+]
+
+[package.dependencies]
+packaging = ">=23.1"
+
+[[package]]
 name = "django"
 version = "5.1.5"
 description = "A high-level Python web framework that encourages rapid development and clean, pragmatic design."
@@ -596,4 +611,4 @@ h11 = ">=0.9.0,<1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10"
-content-hash = "f6930158a0e6d5f05a6aa04a22d0f04a26e2ff1b8494249cd4fd6524b5cf6b56"
+content-hash = "0e3f50f5023bed6fa0c2d410e5cb7f73a47d40b63ab338ef76b76aadedd72fbb"
