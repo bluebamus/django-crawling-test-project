@@ -31,13 +31,115 @@ class BannerCrawler:
 
     def __init__(self):
         # HTTP 프록시 서버 리스트
+        # self.proxy_list = [
+        #     {'ip': '211.225.214.241', 'port': '80', 'type': 'http'},
+        #     {'ip': '211.202.167.56', 'port': '80', 'type': 'http'},
+        #     {'ip': '211.34.105.33', 'port': '80', 'type': 'http'},
+        #     {'ip': '154.90.63.164', 'port': '3128', 'type': 'http'},
+        #     {'ip': '193.123.252.70', 'port': '35973', 'type': 'socks5'},
+        #     {'ip': '45.64.173.109', 'port': '80', 'type': 'http'},
+        # ]
         self.proxy_list = [
-            {'ip': '211.225.214.241', 'port': '80', 'type': 'http'},
-            {'ip': '211.202.167.56', 'port': '80', 'type': 'http'},
-            {'ip': '211.34.105.33', 'port': '80', 'type': 'http'},
-            {'ip': '154.90.63.164', 'port': '3128', 'type': 'http'},
-            {'ip': '193.123.252.70', 'port': '35973', 'type': 'socks5'},
-            {'ip': '45.64.173.109', 'port': '80', 'type': 'http'},
+            '49.254.147.104:5320',
+            '49.254.145.27:6562',
+            '49.254.40.98:6915',
+            '115.144.117.241:5018',
+            '49.254.60.40:6953',
+            '49.254.205.189:6746',
+            '121.126.129.151:5255',
+            '183.78.134.78:6371',
+            '49.254.24.198:6825',
+            '183.78.134.76:6369',
+            '121.126.106.175:5471',
+            '121.126.139.175:5644',
+            '124.198.21.50:6017',
+            '121.126.47.35:5835',
+            '49.254.126.142:5606',
+            '121.126.28.216:5128',
+            '124.198.73.220:5264',
+            '49.254.186.134:6660',
+            '124.198.29.14:6037',
+            '49.254.114.2:6475',
+            '115.144.239.224:5160',
+            '115.144.250.223:5327',
+            '49.254.32.143:6904',
+            '121.126.64.105:5481',
+            '49.254.190.27:6680',
+            '49.254.127.126:6518',
+            '115.144.44.74:5409',
+            '121.126.182.208:5376',
+            '121.126.177.245:5393',
+            '121.126.204.242:5710',
+            '49.254.206.12:6753',
+            '115.144.201.15:5263',
+            '49.254.191.72:6685',
+            '49.254.33.85:5341',
+            '124.198.12.11:5994',
+            '124.198.10.75:5954',
+            '49.254.117.250:5027',
+            '115.144.225.79:5159',
+            '49.254.127.121:6513',
+            '121.126.52.166:5854',
+            '115.144.4.77:5388',
+            '49.254.9.25:7017',
+            '49.254.24.194:6821',
+            '49.254.189.121:6663',
+            '49.254.127.123:6515',
+            '124.198.43.139:6082',
+            '49.254.23.118:6801',
+            '49.254.224.178:5027',
+            '49.254.24.197:6824',
+            '115.144.234.138:5370',
+            '121.126.86.140:5908',
+            '121.126.175.237:5221',
+            '115.144.251.2:5329',
+            '183.78.129.90:6351',
+            '49.254.126.141:5605',
+            '124.198.36.200:5432',
+            '49.254.138.186:6545',
+            '115.144.7.161:5487',
+            '125.7.134.146:6272',
+            '115.144.143.31:5088',
+            '49.254.28.55:6881',
+            '49.254.251.79:6866',
+            '49.254.251.73:6860',
+            '115.144.30.34:5353',
+            '121.126.95.1:5936',
+            '121.126.64.110:5486',
+            '203.109.26.236:5676',
+            '115.144.254.118:5341',
+            '121.126.183.221:5101',
+            '202.126.114.18:6391',
+            '49.254.124.7:6511',
+            '121.126.137.148:5633',
+            '115.144.22.39:5287',
+            '124.198.125.150:5318',
+            '121.126.4.109:5493',
+            '115.144.79.29:5507',
+            '115.144.61.193:5455',
+            '49.254.16.15:6606',
+            '115.144.79.31:5509',
+            '202.126.114.23:6396',
+            '125.7.137.106:5418',
+            '121.126.148.115:5060',
+            '115.144.221.202:5290',
+            '121.126.23.233:5553',
+            '121.126.199.81:5705',
+            '121.126.137.146:5631',
+            '49.254.21.98:5298',
+            '115.144.170.20:5141',
+            '124.198.101.103:5966',
+            '115.144.30.38:5357',
+            '124.198.37.141:6068',
+            '121.126.95.6:5941',
+            '124.198.72.26:6161',
+            '115.144.52.121:5432',
+            '124.198.16.40:6007',
+            '121.126.88.99:5683',
+            '49.254.224.176:5025',
+            '49.254.206.213:5125',
+            '124.198.125.149:5317',
+            '121.126.221.197:5721',
         ]
         self.ua = UserAgent()
         
@@ -98,10 +200,13 @@ class BannerCrawler:
         options.add_argument(f'--window-size={window_size[0]},{window_size[1]}')
         
         # HTTP 프록시 설정
+        # if proxy_info:
+        #     proxy_addr = f"{proxy_info['ip']}:{proxy_info['port']}"
+        #     logging.info(f"Setting up HTTP proxy: {proxy_addr}")
+        #     options.add_argument(f'--proxy-server={proxy_addr}')
         if proxy_info:
-            proxy_addr = f"{proxy_info['ip']}:{proxy_info['port']}"
-            logging.info(f"Setting up HTTP proxy: {proxy_addr}")
-            options.add_argument(f'--proxy-server={proxy_addr}')
+            logging.info(f"Setting up HTTP proxy: {proxy_info}")
+            options.add_argument(f'--proxy-server={proxy_info}')
    
         # Chrome 드라이버 설정
         service = Service(ChromeDriverManager().install())
@@ -135,12 +240,18 @@ class BannerCrawler:
         current_index = 0  # 현재 프록시 인덱스 초기화
         total_proxies = len(self.proxy_list)  # 총 프록시 수
 
-        while True:  # 무한 루프를 통해 프록시를 순환
-            proxy_info = self.get_proxy(self.proxy_list[current_index])  # 현재 프록시 가져오기
-            proxy_url = f"{proxy_info['type']}://{proxy_info['ip']}:{proxy_info['port']}"
+        while current_index < total_proxies:  # 무한 루프를 통해 프록시를 순환
+            # proxy_info = self.get_proxy(self.proxy_list[current_index])  # 현재 프록시 가져오기
+            # proxy_url = f"{proxy_info['type']}://{proxy_info['ip']}:{proxy_info['port']}"
+            # proxies = {
+            #     'http': proxy_url,
+            #     'https': proxy_url
+            # }
+            proxy_info = self.proxy_list[current_index]  # 현재 프록시 가져오기
+            proxy_url = f"http://{proxy_info}"
             proxies = {
-                'http': proxy_url,
-                'https': proxy_url
+                'http': proxy_info,
+                'https': proxy_info
             }
 
             try:
@@ -158,6 +269,24 @@ class BannerCrawler:
                     continue
                     
                 logging.info(f"Using proxy: {proxy_url}")
+                
+                # 프록시 IP의 위치 정보 확인
+                ip_info_response = requests.get(f'https://ipinfo.io/{proxy_info.split(":")[0]}/json', proxies=proxies)
+                ip_info_response.raise_for_status()  # HTTP 에러 상태 코드가 있으면 예외 발생
+                ip_info = ip_info_response.json()
+                country = ip_info.get('country', 'Unknown')
+                city = ip_info.get('city', 'Unknown')
+
+                # 특정 로그를 별도의 파일에 저장하기 위한 설정
+                specific_logger = logging.getLogger('specific_logger')
+                specific_handler = logging.FileHandler('crawler_hl_ipl_list.txt')
+                specific_handler.setLevel(logging.INFO)
+                specific_formatter = logging.Formatter('%(asctime)s - %(message)s')
+                specific_handler.setFormatter(specific_formatter)
+                specific_logger.addHandler(specific_handler)
+
+                specific_logger.info(f"Proxy IP {proxy_info} is located in {city}, {country}")
+
                 
                 # Selenium 드라이버 설정
                 driver = self.setup_driver(proxy_info)
@@ -179,8 +308,21 @@ class BannerCrawler:
                 random_image = random.choice(images)
                 driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", random_image)
                 time.sleep(random.uniform(0.5, 1.5))
-                random_image.click()
-                logging.info(f"Clicked image: {random_image.get_attribute('src')}")
+                
+                # 이미지 요소의 XPath를 사용하여 다시 찾기
+                image_xpath = f"//img[@alt='Test {images.index(random_image) + 1}']"  # 이미지 인덱스에 따라 XPath 설정
+                try:
+                    # 요소가 나타날 때까지 최대 10초 대기
+                    random_image = WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located((By.XPATH, image_xpath))
+                    )
+                    logging.info(f"Clicked image: {random_image.get_attribute('src')}")
+                    random_image.click()  # 클릭 동작
+                except NoSuchElementException:
+                    logging.warning("NoSuchElementException: 요소를 찾을 수 없습니다.")
+                except StaleElementReferenceException:
+                    logging.warning("StaleElementReferenceException: 요소가 더 이상 유효하지 않습니다. 다시 시도합니다.")
+                    # 필요시 다시 시도하는 로직 추가
 
                 driver.quit()  # 작업 완료 후 드라이버 종료
                 

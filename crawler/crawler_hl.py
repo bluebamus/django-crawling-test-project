@@ -30,14 +30,10 @@ class BannerCrawler:
     """
 
     def __init__(self):
-        # HTTP 프록시 서버 리스트
         self.proxy_list = [
-            {'ip': '211.225.214.241', 'port': '80', 'type': 'http'},
-            {'ip': '211.202.167.56', 'port': '80', 'type': 'http'},
-            {'ip': '211.34.105.33', 'port': '80', 'type': 'http'},
-            {'ip': '154.90.63.164', 'port': '3128', 'type': 'http'},
-            {'ip': '193.123.252.70', 'port': '35973', 'type': 'socks5'},
-            {'ip': '45.64.173.109', 'port': '80', 'type': 'http'},
+            '49.254.147.104:5320',
+            '124.198.125.149:5317',
+            '121.126.221.197:5721',
         ]
         self.ua = UserAgent()
         
@@ -102,9 +98,8 @@ class BannerCrawler:
         
         # HTTP 프록시 설정
         if proxy_info:
-            proxy_addr = f"{proxy_info['ip']}:{proxy_info['port']}"
-            logging.info(f"Setting up HTTP proxy: {proxy_addr}")
-            options.add_argument(f'--proxy-server={proxy_addr}')
+            logging.info(f"Setting up HTTP proxy: {proxy_info}")
+            options.add_argument(f'--proxy-server={proxy_info}')
    
         # Chrome 드라이버 설정
         service = Service(ChromeDriverManager().install())
@@ -118,13 +113,7 @@ class BannerCrawler:
         
         # DNS Leak Test 페이지로 이동
         driver.set_page_load_timeout(10)
-        # driver.get("https://dnsleaktest.com/")  # DNS Leak Test 페이지 요청
-        # logging.info("Accessing DNS Leak Test page.")  # 페이지 접근 로그
 
-        # # "Standard test" 버튼이 로드될 때까지 대기
-        # wait = WebDriverWait(driver, 10)  # 최대 20초 대기
-        # wait.until(EC.presence_of_element_located((By.XPATH, "//input[@type='submit' and @class='standard' and @name='type' and @value='Standard test']")))  # 특정 요소가 로드될 때까지 대기
-        
         return driver  # 설정된 드라이버 반환
         
 
@@ -138,12 +127,12 @@ class BannerCrawler:
         current_index = 0  # 현재 프록시 인덱스 초기화
         total_proxies = len(self.proxy_list)  # 총 프록시 수
 
-        while True:  # 무한 루프를 통해 프록시를 순환
-            proxy_info = self.get_proxy(self.proxy_list[current_index])  # 현재 프록시 가져오기
-            proxy_url = f"{proxy_info['type']}://{proxy_info['ip']}:{proxy_info['port']}"
+        while current_index < total_proxies:  # 무한 루프를 통해 프록시를 순환
+            proxy_info = self.proxy_list[current_index]  # 현재 프록시 가져오기
+            proxy_url = f"http://{proxy_info}"
             proxies = {
-                'http': proxy_url,
-                'https': proxy_url
+                'http': proxy_info,
+                'https': proxy_info
             }
 
             try:
@@ -161,6 +150,24 @@ class BannerCrawler:
                     continue
                     
                 logging.info(f"Using proxy: {proxy_url}")
+                
+                # 프록시 IP의 위치 정보 확인
+                ip_info_response = requests.get(f'https://ipinfo.io/{proxy_info.split(":")[0]}/json', proxies=proxies)
+                ip_info_response.raise_for_status()  # HTTP 에러 상태 코드가 있으면 예외 발생
+                ip_info = ip_info_response.json()
+                country = ip_info.get('country', 'Unknown')
+                city = ip_info.get('city', 'Unknown')
+
+                # 특정 로그를 별도의 파일에 저장하기 위한 설정
+                specific_logger = logging.getLogger('specific_logger')
+                specific_handler = logging.FileHandler('crawler_hl_ipl_list.txt')
+                specific_handler.setLevel(logging.INFO)
+                specific_formatter = logging.Formatter('%(asctime)s - %(message)s')
+                specific_handler.setFormatter(specific_formatter)
+                specific_logger.addHandler(specific_handler)
+
+                specific_logger.info(f"Proxy IP {proxy_info} is located in {city}, {country}")
+
                 
                 # Selenium 드라이버 설정
                 driver = self.setup_driver(proxy_info)
@@ -182,8 +189,21 @@ class BannerCrawler:
                 random_image = random.choice(images)
                 driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", random_image)
                 time.sleep(random.uniform(0.5, 1.5))
-                random_image.click()
-                logging.info(f"Clicked image: {random_image.get_attribute('src')}")
+                
+                # 이미지 요소의 XPath를 사용하여 다시 찾기
+                image_xpath = f"//img[@alt='Test {images.index(random_image) + 1}']"  # 이미지 인덱스에 따라 XPath 설정
+                try:
+                    # 요소가 나타날 때까지 최대 10초 대기
+                    random_image = WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located((By.XPATH, image_xpath))
+                    )
+                    logging.info(f"Clicked image: {random_image.get_attribute('src')}")
+                    random_image.click()  # 클릭 동작
+                except NoSuchElementException:
+                    logging.warning("NoSuchElementException: 요소를 찾을 수 없습니다.")
+                except StaleElementReferenceException:
+                    logging.warning("StaleElementReferenceException: 요소가 더 이상 유효하지 않습니다. 다시 시도합니다.")
+                    # 필요시 다시 시도하는 로직 추가
 
                 driver.quit()  # 작업 완료 후 드라이버 종료
                 
